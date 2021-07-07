@@ -9,19 +9,19 @@ import (
 )
 
 var Version string
-func testBar() {
-	bar := progressbar.Default(-1, "aaa", "bbb")
+func testBar(desc string) {
+	bar := progressbar.Default(-1, desc)
 	err := bar.Set(0)
 	CheckError(err)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 500; i++ {
 		err = bar.Add(1)
 		CheckError(err)
-		time.Sleep(40 * time.Millisecond)
+		time.Sleep(4 * time.Millisecond)
 	}
+	bar.Finish()
 }
 
 func main() {
-	//testBar()
 	SrcPath = flag.String("s", "","Specify the directory where Joplin exported the RAW data" )
 	DestPath = flag.String("d", "", "The directory of Obsidian vault")
 	flag.Parse()
@@ -49,7 +49,36 @@ func main() {
 	chkPath(*SrcPath)
 	chkPath(*DestPath)
 
-	HandlingCoreBusiness()
-	fmt.Println("Done!")
+	progress := make(chan int,1)
+	done := make(chan bool, 1)
+	go HandlingCoreBusiness(progress, done)
+
+	go func() {
+		var bar *progressbar.ProgressBar
+		step := 0
+		for newStep := range progress {
+			if newStep != step {
+				if bar != nil {
+					bar.Finish()
+				}
+				step = newStep
+				bar = progressbar.Default(-1, StepDesc[newStep])
+				err := bar.Set(0)
+				CheckError(err)
+			}
+			if bar!=nil {
+				err := bar.Add(1)
+				CheckError(err)
+			}
+		}
+		if bar!=nil {
+			bar.Finish()
+		}
+	}()
+
+
+	<-done
+	fmt.Println("\n\nDone!\n")
+	fmt.Println(fmt.Sprintf("The next step is to open %s as vault in Obsidian, Then you will see what you want to see.", *DestPath))
 
 }

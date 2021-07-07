@@ -63,7 +63,14 @@ func GetFileInfo(filePath string) (*FileInfo , *string){
 	}, &strData
 }
 
-func HandlingCoreBusiness() {
+ var StepDesc = [5]string {
+	"Initializing",
+	"Extracting Metadata", //1
+	"Rebuilding Folders",
+	"Rebuilding Articles",
+	"Saving Data",
+}
+func HandlingCoreBusiness(progress chan<- int,  done chan<- bool) {
 	folderMap := make(map[string]*Folder)
 	articleMap := make(map[string]*Article)
 	resMap := make(map[string]*Resource)
@@ -91,20 +98,25 @@ func HandlingCoreBusiness() {
 		} else if 4==fi.metaType {
 			resMap[fi.metaId] = &Resource{FileInfo:fi}
 		}
+		progress<-1
 	}
-	EstablishFoldersRelationship(&folderMap)
-	EstablishArticlesRelationship(&articleMap, &folderMap)
+	RebuildFoldersRelationship(&folderMap, progress)
+	RebuildArticlesRelationship(&articleMap, &folderMap, progress)
 
 	err = copy2.Copy(path.Join(*SrcPath, ResourcesFolder), path.Join(*DestPath, ResourcesFolder))
 	CheckError(err)
 
 	for _, article := range articleMap {
-		RepairResourceRef(article, &resMap)
+		FixResourceRef(article, &resMap)
 		article.save()
+		progress<-4
 	}
+
+	close(progress)
+	done <- true
 }
 
-func RepairResourceRef(article *Article, resMap *map[string]*Resource) {
+func FixResourceRef(article *Article, resMap *map[string]*Resource) {
 	content := article.content
 	r, _ := regexp.Compile(`!\[(.*?)]\(:/(.*?)\)`)
 	matchAll := r.FindAllStringSubmatchIndex(content, -1)
@@ -123,18 +135,20 @@ func RepairResourceRef(article *Article, resMap *map[string]*Resource) {
 	article.content = content
 }
 
-func EstablishFoldersRelationship(folderMap *map[string]*Folder) {
+func RebuildFoldersRelationship(folderMap *map[string]*Folder, progress chan<- int) {
 	for _, folder := range *folderMap {
 		if len(folder.metaParentId)==0 {continue}
 		parent := (*folderMap)[folder.metaParentId]
 		folder.parent = parent
+		progress<-2
 	}
 }
 
-func EstablishArticlesRelationship(articleMap *map[string]*Article, folderMap *map[string]*Folder) {
+func RebuildArticlesRelationship(articleMap *map[string]*Article, folderMap *map[string]*Folder, progress chan<- int) {
 	for _, article := range *articleMap {
 		if len(article.metaParentId)==0 {continue}
 		parent := (*folderMap)[article.metaParentId]
 		article.folder = parent
+		progress<-3
 	}
 }
