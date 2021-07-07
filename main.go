@@ -5,21 +5,9 @@ import (
 	"fmt"
 	"github.com/schollz/progressbar/v3"
 	"os"
-	"time"
 )
 
 var Version string
-func testBar(desc string) {
-	bar := progressbar.Default(-1, desc)
-	err := bar.Set(0)
-	CheckError(err)
-	for i := 0; i < 500; i++ {
-		err = bar.Add(1)
-		CheckError(err)
-		time.Sleep(4 * time.Millisecond)
-	}
-	bar.Finish()
-}
 
 func main() {
 	SrcPath = flag.String("s", "","Specify the directory where Joplin exported the RAW data" )
@@ -75,7 +63,6 @@ func main() {
 			bar.Finish()
 		}
 	}()
-
 
 	<-done
 	fmt.Println("\n\nDone!\n")
