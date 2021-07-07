@@ -17,7 +17,7 @@ Usage of joplin2obsidian:
         The destination directory of Obsidian vault
 ~~~
 
-3. Open the destination directory as vault in ObsidiaN
+3. Open the destination directory as vault in Obsidian
 
 Done!
 
