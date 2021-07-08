@@ -4,7 +4,7 @@
 joplin2obsidian is a conversion tool to help you making the move from Joplin to Obsidian
 
 ## How to use
-1. Firstly, Open Joplin, export all notes as RAW to a directory
+1. Firstly, Open Joplin, export all data (*notes and corresponding resources*) as RAW to a directory
 
 ![export](exportnotes.png)
 
