@@ -76,5 +76,20 @@ type Resource struct {
 	*FileInfo
 }
 func (r Resource) getFileName() string {
-	return fmt.Sprintf("%s.%s", r.metaId, r.metaFileExt)
+	var fileName string
+	if /*len(r.metaFileExt) > 0*/false {
+		fileName = fmt.Sprintf("%s.%s", r.metaId, r.metaFileExt)
+	} else {
+		resPath := path.Join(*SrcPath, "resources")
+		c, err := ioutil.ReadDir(resPath)
+		CheckError(err)
+		for _, entry := range c {
+			if entry.IsDir() {continue}
+			if strings.Index(entry.Name(), r.metaId) >=0 {
+				fileName = entry.Name()
+				break
+			}
+		}
+	}
+	return fileName
 }

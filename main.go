@@ -65,7 +65,7 @@ func main() {
 	}()
 
 	<-done
-	fmt.Println("\n\nDone!\n")
+	fmt.Printf("\n\nDone!\n\n")
 	fmt.Println(fmt.Sprintf("The next step is to open %s as vault in Obsidian, Then you will see what you want to see.", *DestPath))
 
 }
