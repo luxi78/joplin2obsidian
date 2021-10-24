@@ -8,7 +8,7 @@ joplin2obsidian is a conversion tool to help you making the move from Joplin to 
 
 ![export](exportnotes.png)
 
-2. Run joplin2obsidian to convert the "RAW - Joplin Export Directory" to Oobsidian-Compatible vault directory 
+2. Run joplin2obsidian to convert the "RAW - Joplin Export Directory" to Obsidian-Compatible vault directory 
 ~~~bash
 Usage of joplin2obsidian:
   -s string
