@@ -118,7 +118,7 @@ func HandlingCoreBusiness(progress chan<- int,  done chan<- bool) {
 
 func FixResourceRef(article *Article, resMap *map[string]*Resource) {
 	content := article.content
-	r, _ := regexp.Compile(`!\[(.*?)]\(:/(.*?)\)`)
+	r, _ := regexp.Compile(`!?\[(.*?)]\(:/(.*?)\)`)
 	matchAll := r.FindAllStringSubmatchIndex(content, -1)
 	for i:=len(matchAll)-1;i>=0;i-- {
 		match := matchAll[i]
