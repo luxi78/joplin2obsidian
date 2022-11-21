@@ -142,7 +142,7 @@ func FixResourceRef(article *Article, resMap *map[string]*Resource, articleMap *
 		if res, prs := (*resMap)[resId]; prs {
 			resFileName = res.getFileName()
 		} else if res, prs := (*articleMap)[resId]; prs {
-			resFileName = res.getValidName()
+			resFileName = path.Join(res.folder.getRelativePath(), res.getValidName())
 		} else {
 			resFileName = path.Join("resources", resId) // help to find lost resource
 		}
