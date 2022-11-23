@@ -11,7 +11,18 @@ import (
 	copy2 "github.com/otiai10/copy"
 )
 
+var (
+	rID       = regexp.MustCompile("id: *(.*)\n")
+	rType     = regexp.MustCompile("type_: *(.*)\n")
+	rPID      = regexp.MustCompile("parent_id: *(.*)\n")
+	rExt      = regexp.MustCompile("file_extension: *(.*)\n")
+	rName     = regexp.MustCompile("(.*)\n")
+	rCreateAt = regexp.MustCompile("user_created_time: *(.*)\n")
+	rUpdateAt = regexp.MustCompile("user_updated_time: *(.*)\n")
+)
+
 func GetFileInfo(filePath string) (*FileInfo, *string) {
+	// NOTE on match: [0] is full regex match, [1] is the group we want
 	data, err := ioutil.ReadFile(filePath)
 	CheckError(err)
 	strData := strings.TrimSpace(string(data))
@@ -22,16 +33,13 @@ func GetFileInfo(filePath string) (*FileInfo, *string) {
 
 	strMeta := strData[metaIndex:]
 	strMeta = fmt.Sprintf("%s\n", strMeta)
-
-	r, _ := regexp.Compile("id: *(.*)\n")
-	match := r.FindStringSubmatch(strMeta)
+	match := rID.FindStringSubmatch(strMeta)
 	if len(match) < 2 {
 		return nil, nil
 	}
 	metaId := match[1]
 
-	r, _ = regexp.Compile("type_: *(.*)\n")
-	match = r.FindStringSubmatch(strMeta)
+	match = rType.FindStringSubmatch(strMeta)
 	if len(match) < 2 {
 		return nil, nil
 	}
@@ -42,33 +50,44 @@ func GetFileInfo(filePath string) (*FileInfo, *string) {
 	}
 
 	metaParentId := ""
-	r, _ = regexp.Compile("parent_id: *(.*)\n")
-	match = r.FindStringSubmatch(strMeta)
+	match = rPID.FindStringSubmatch(strMeta)
 	if len(match) >= 2 {
 		metaParentId = match[1]
 	}
 
 	metaFileExt := ""
-	r, _ = regexp.Compile("file_extension: *(.*)\n")
-	match = r.FindStringSubmatch(strMeta)
+	match = rExt.FindStringSubmatch(strMeta)
 	if len(match) >= 2 {
 		metaFileExt = match[1]
 	}
 
-	r, _ = regexp.Compile("(.*)\n")
-	match = r.FindStringSubmatch(strData)
+	match = rName.FindStringSubmatch(strData)
 	if len(match) < 2 {
 		return nil, nil
 	}
 	name := strings.TrimSpace(match[1])
 
+	match = rCreateAt.FindStringSubmatch(strData)
+	if len(match) != 2 {
+		return nil, nil
+	}
+	createdAt := strings.TrimSpace(match[1])
+
+	match = rUpdateAt.FindStringSubmatch(strData)
+	if len(match) != 2 {
+		return nil, nil
+	}
+	updatedAt := strings.TrimSpace(match[1])
+
 	return &FileInfo{
-		name:         name,
-		metaIndex:    metaIndex,
-		metaId:       metaId,
-		metaType:     metaType,
-		metaParentId: metaParentId,
-		metaFileExt:  metaFileExt,
+		name:          name,
+		metaIndex:     metaIndex,
+		metaId:        metaId,
+		metaType:      metaType,
+		metaParentId:  metaParentId,
+		metaFileExt:   metaFileExt,
+		metaCreatedAt: createdAt,
+		metaUpdatedAt: updatedAt,
 	}, &strData
 }
 

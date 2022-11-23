@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 var SrcPath *string
@@ -20,12 +20,14 @@ func CheckError(e error) {
 }
 
 type FileInfo struct {
-	name         string
-	metaIndex    int
-	metaId       string
-	metaParentId string
-	metaType     int //1:Article 2:Folder 4:Resource 5:Tag
-	metaFileExt  string
+	name          string
+	metaIndex     int
+	metaId        string
+	metaParentId  string
+	metaType      int //1:Article 2:Folder 4:Resource 5:Tag
+	metaFileExt   string
+	metaCreatedAt string
+	metaUpdatedAt string
 }
 
 func (fi FileInfo) getValidName() string {
@@ -75,8 +77,26 @@ func (a Article) save() {
 		err := os.MkdirAll(dirName, 0755)
 		CheckError(err)
 	}
-	err := ioutil.WriteFile(filePath, []byte(a.content), 0644)
+	// optional meta info to sort by time like Joplin
+	prefix := ""
+	meta := a.FileInfo
+	if meta != nil && meta.metaCreatedAt != "" && meta.metaUpdatedAt != "" && meta.metaId != "" {
+		prefix = fmt.Sprintf("---\ncreated: %v\nupdated: %v\njoplin_id: %v\n---\n",
+			meta.metaCreatedAt, meta.metaUpdatedAt, meta.metaId,
+		)
+	}
+
+	err := os.WriteFile(filePath, []byte(prefix+a.content), 0644)
 	CheckError(err)
+
+	// optionally change mtime and atime
+	// 2021-07-10T02:10:03.850Z
+	if meta != nil && meta.metaCreatedAt != "" && meta.metaUpdatedAt != "" {
+		updatedAt, err := time.Parse(time.RFC3339, meta.metaUpdatedAt)
+		CheckError(err)
+		err = os.Chtimes(filePath, updatedAt, updatedAt)
+		CheckError(err)
+	}
 }
 
 type Resource struct {
@@ -89,7 +109,7 @@ func (r Resource) getFileName() string {
 		fileName = fmt.Sprintf("%s.%s", r.metaId, r.metaFileExt)
 	} else {
 		resPath := path.Join(*SrcPath, "resources")
-		c, err := ioutil.ReadDir(resPath)
+		c, err := os.ReadDir(resPath)
 		CheckError(err)
 		for _, entry := range c {
 			if entry.IsDir() {
