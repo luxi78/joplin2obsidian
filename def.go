@@ -50,10 +50,14 @@ type Folder struct {
 }
 
 func (f Folder) getPath() string {
+	return path.Join(*DestPath, f.getRelativePath())
+}
+
+func (f Folder) getRelativePath() string {
 	if f.parent == nil {
-		return path.Join(*DestPath, f.getValidName())
+		return f.getValidName()
 	} else {
-		return path.Join(f.parent.getPath(), f.getValidName())
+		return path.Join(f.parent.getRelativePath(), f.getValidName())
 	}
 }
 

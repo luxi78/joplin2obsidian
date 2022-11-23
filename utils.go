@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	copy2 "github.com/otiai10/copy"
 	"io/ioutil"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
+
+	copy2 "github.com/otiai10/copy"
 )
 
 var (
@@ -139,7 +140,7 @@ func HandlingCoreBusiness(progress chan<- int, done chan<- bool) {
 	CheckError(err)
 
 	for _, article := range articleMap {
-		FixResourceRef(article, &resMap)
+		FixResourceRef(article, &resMap, &articleMap)
 		article.save()
 		progress <- 4
 	}
@@ -148,21 +149,23 @@ func HandlingCoreBusiness(progress chan<- int, done chan<- bool) {
 	done <- true
 }
 
-func FixResourceRef(article *Article, resMap *map[string]*Resource) {
+func FixResourceRef(article *Article, resMap *map[string]*Resource, articleMap *map[string]*Article) {
 	content := article.content
-	r, _ := regexp.Compile(`!?\[(.*?)]\(:/(.*?)\)`)
+	r, _ := regexp.Compile(`(!?)\[(.*?)]\(:/(.*?)\)`)
 	matchAll := r.FindAllStringSubmatchIndex(content, -1)
 	for i := len(matchAll) - 1; i >= 0; i-- {
 		match := matchAll[i]
-		resId := strings.Split(content[match[4]:match[5]], " ")[0]
+		resId := strings.Split(content[match[6]:match[7]], " ")[0]
 
 		var resFileName string
 		if res, prs := (*resMap)[resId]; prs {
 			resFileName = res.getFileName()
+		} else if res, prs := (*articleMap)[resId]; prs {
+			resFileName = path.Join(res.folder.getRelativePath(), res.getValidName())
 		} else {
-			resFileName = resId
+			resFileName = path.Join("resources", resId) // help to find lost resource
 		}
-		content = fmt.Sprintf("%s![[%s]]%s", content[:match[0]], resFileName, content[match[1]:])
+		content = fmt.Sprintf("%s[[%s]]%s", content[:match[3]], resFileName, content[match[1]:])
 	}
 	article.content = content
 }
