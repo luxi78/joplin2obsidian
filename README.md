@@ -1,14 +1,16 @@
 # joplin2obsidian
 
 ## What is joplin2obsidian?
-joplin2obsidian is a conversion tool to help you making the move from Joplin to Obsidian
+joplin2obsidian is a conversion tool to help you making the move from [Joplin](https://joplinapp.org/) to [Obsidian](https://obsidian.md).
 
 ## How to use
-1. Firstly, Open Joplin, export all data (*notes and corresponding resources*) as RAW to a directory
+1. Download the [latest release](https://github.com/luxi78/joplin2obsidian/releases/latest)
+
+2. Open Joplin, export all data (*notes and corresponding resources*) as RAW to a directory
 
 ![export](exportnotes.png)
 
-2. Run joplin2obsidian to convert the "RAW - Joplin Export Directory" to Obsidian-Compatible vault directory 
+3. Run `joplin2obsidian` to convert the "RAW - Joplin Export Directory" to an Obsidian-compatible vault directory 
 ~~~bash
 Usage of joplin2obsidian:
   -s string
@@ -17,7 +19,7 @@ Usage of joplin2obsidian:
         The destination directory of Obsidian vault
 ~~~
 
-3. Open the destination directory as vault in Obsidian
+4. Open the destination directory as vault in Obsidian
 
 Done!
 
