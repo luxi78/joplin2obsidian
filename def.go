@@ -11,7 +11,7 @@ import (
 var SrcPath *string
 var DestPath *string
 
-const ResourcesFolder string = "resources"
+const ResourcesFolder string = ".resource"
 
 func CheckError(e error) {
 	if e != nil {
@@ -88,7 +88,7 @@ func (r Resource) getFileName() string {
 	if /*len(r.metaFileExt) > 0*/ false {
 		fileName = fmt.Sprintf("%s.%s", r.metaId, r.metaFileExt)
 	} else {
-		resPath := path.Join(*SrcPath, "resources")
+		resPath := path.Join(*SrcPath, ".resource")
 		c, err := ioutil.ReadDir(resPath)
 		CheckError(err)
 		for _, entry := range c {
