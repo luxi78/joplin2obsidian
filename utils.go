@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	copy2 "github.com/otiai10/copy"
 )
@@ -55,6 +56,23 @@ func GetFileInfo(filePath string) (*FileInfo, *string) {
 		metaFileExt = match[1]
 	}
 
+	// Extract updated_time from metadata
+	updatedTime := time.Time{}
+	r, _ = regexp.Compile("updated_time: *(.*)\n")
+	match = r.FindStringSubmatch(strMeta)
+	if len(match) >= 2 && match[1] != "" {
+		timestamp, err := time.Parse(time.RFC3339Nano, match[1])
+		if err == nil {
+			updatedTime = timestamp
+		} else {
+			// Try without nanoseconds if first parse fails
+			timestamp, err = time.Parse(time.RFC3339, match[1])
+			if err == nil {
+				updatedTime = timestamp
+			}
+		}
+	}
+
 	r, _ = regexp.Compile("(.*)\n")
 	match = r.FindStringSubmatch(strData)
 	if len(match) < 2 {
@@ -69,6 +87,7 @@ func GetFileInfo(filePath string) (*FileInfo, *string) {
 		metaType:     metaType,
 		metaParentId: metaParentId,
 		metaFileExt:  metaFileExt,
+		updatedTime:  updatedTime,
 	}, &strData
 }
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 var SrcPath *string
@@ -26,6 +27,7 @@ type FileInfo struct {
 	metaParentId string
 	metaType     int //1:Article 2:Folder 4:Resource 5:Tag
 	metaFileExt  string
+	updatedTime  time.Time
 }
 
 func (fi FileInfo) getValidName() string {
@@ -77,6 +79,14 @@ func (a Article) save() {
 	}
 	err := ioutil.WriteFile(filePath, []byte(a.content), 0644)
 	CheckError(err)
+	
+	// Set the file's modification time based on the Joplin note's updated_time
+	if !a.updatedTime.IsZero() {
+		err = os.Chtimes(filePath, a.updatedTime, a.updatedTime)
+		if err != nil {
+			fmt.Printf("Warning: Failed to set modification time for %s: %v\n", filePath, err)
+		}
+	}
 }
 
 type Resource struct {
