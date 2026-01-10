@@ -1,3 +1,6 @@
+// Package main implements joplin2obsidian, a conversion tool to migrate notes from Joplin to Obsidian.
+// It converts Joplin's RAW export format to Obsidian-compatible markdown with proper frontmatter
+// and resource references.
 package main
 
 import (
@@ -37,35 +40,50 @@ func main() {
 	chkPath(*SrcPath)
 	chkPath(*DestPath)
 
+	if err := DetectResourcesFolder(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error detecting resources folder: %v\n", err)
+		os.Exit(1)
+	}
+
+	stats := &ConversionStats{}
 	progress := make(chan int,1)
 	done := make(chan bool, 1)
-	go HandlingCoreBusiness(progress, done)
+	go HandlingCoreBusiness(progress, done, stats)
 
 	go func() {
 		var bar *progressbar.ProgressBar
-		step := 0
-		for newStep := range progress {
-			if newStep != step {
-				if bar != nil {
-					bar.Finish()
-				}
-				step = newStep
-				bar = progressbar.Default(-1, StepDesc[newStep])
-				err := bar.Set(0)
-				CheckError(err)
+		totalFiles := 0
+		for val := range progress {
+			// Negative value indicates total file count
+			if val < 0 {
+				totalFiles = -val
+				bar = progressbar.Default(int64(totalFiles), "Processing files")
+				continue
 			}
-			if bar!=nil {
+
+			// Positive value indicates progress
+			if bar != nil {
 				err := bar.Add(1)
-				CheckError(err)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Progress bar error: %v\n", err)
+				}
 			}
 		}
-		if bar!=nil {
+		if bar != nil {
 			bar.Finish()
 		}
 	}()
 
 	<-done
-	fmt.Printf("\n\nDone!\n\n")
-	fmt.Println(fmt.Sprintf("The next step is to open %s as vault in Obsidian, Then you will see what you want to see.", *DestPath))
+	fmt.Printf("\n\nConversion complete!\n\n")
+	fmt.Println("Summary:")
+	fmt.Printf("  %c %d articles converted\n", '\u2713', stats.ArticlesConverted)
+	fmt.Printf("  %c %d folders created\n", '\u2713', stats.FoldersCreated)
+	fmt.Printf("  %c %d resources copied\n", '\u2713', stats.ResourcesCopied)
+	if stats.FilesSkipped > 0 {
+		fmt.Printf("  %c %d files skipped (see warnings above)\n", '\u26A0', stats.FilesSkipped)
+	}
+	fmt.Printf("\nOutput directory: %s\n", *DestPath)
+	fmt.Println("\nNext step: Open the output directory as a vault in Obsidian.")
 
 }
